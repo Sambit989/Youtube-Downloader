@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en" class="min-h-full bg-gradient-to-br from-gray-50 to-gray-100">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>YouTube Video Downloader - Free Online Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      body { font-family: 'Inter', sans-serif; }
+      .gradient-text {
+        background: linear-gradient(135deg, #FF0000 0%, #FF3333 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto">
+      <!-- Header -->
+      <div class="text-center mb-10">
+        <div class="inline-block mb-6">
+        <!-- YouTube Logo -->
+        <div class="p-4 rounded-2xl bg-white shadow-lg flex items-center justify-center group hover:scale-105 transition-transform duration-200">
+          <div class="w-12 h-12 relative">
+            <svg class="w-full h-full" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M23.5 6.507a2.786 2.786 0 0 0-2.008-2.008c-1.742-.47-8.742-.47-8.742-.47s-7 0-8.742.47A2.786 2.786 0 0 0 2 6.507c-.47 1.742-.47 5.243-.47 5.243s0 3.5.47 5.243a2.786 2.786 0 0 0 2.008 2.008c1.742.47 8.742.47 8.742.47s7 0 8.742-.47a2.786 2.786 0 0 0 2.008-2.008c.47-1.742.47-5.243.47-5.243s0-3.5-.47-5.243zM9.75 15.5v-7.5l6.5 3.75-6.5 3.75z" class="transition-colors duration-200" fill="#FF0000"/>
+            </svg>
+            <div class="absolute inset-0 bg-gradient-to-tr from-red-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg"></div>
+          </div>
+        </div>
+      </div>
+        <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl mb-4">
+          <span class="gradient-text">YouTube</span> Downloader
+        </h1>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+          Download YouTube videos in high quality MP4 format or extract audio as MP3. Fast, free, and no registration required.
+        </p>
+      </div>
+
+      <!-- Status banner -->
+      {% if status %}
+      <div class="mb-6">
+        <div class="rounded-md p-4 text-sm font-medium"
+             aria-live="polite"
+             {% if status.type == 'success' %} style="background-color:#ECFDF5; color:#065F46" {% elif status.type == 'warning' %} style="background-color:#FFFBEB; color:#92400E" {% else %} style="background-color:#FEF2F2; color:#7F1D1D" {% endif %}>
+          {{ status.message }}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Main card -->
+      <div class="bg-white rounded-2xl shadow-xl p-8">
+        <form id="downloadForm" action="/download" method="post" class="space-y-6">
+          <!-- URL input with preview -->
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <label for="url" class="block text-sm font-medium text-gray-900">Video URL</label>
+              <div id="vidDetails" class="hidden text-sm text-gray-500">
+                <span id="vidTitle" class="font-medium"></span>
+                <span id="vidDuration" class="ml-2"></span>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="flex-1 relative">
+                <input type="text" id="url" name="url" 
+                       class="block w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors text-gray-900 placeholder-gray-400"
+                       placeholder="Paste YouTube URL here" required
+                       value="{{ request.form.url or '' }}" />
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"/>
+                  </svg>
+                </div>
+              </div>
+              <div id="thumb" class="w-32 h-20 bg-gray-100 rounded-xl overflow-hidden hidden">
+                <img id="thumbImg" src="" alt="Video thumbnail" class="w-full h-full object-cover" />
+              </div>
+            </div>
+          </div>
+
+          <div class="flex gap-4">
+            <!-- Format selector -->
+            <div class="flex-1">
+              <label for="kind" class="block text-sm font-medium text-gray-900 mb-2">Format</label>
+              <div class="relative">
+                <select id="kind" name="kind" 
+                        class="appearance-none block w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors bg-white text-gray-900">
+                  <option value="mp4" {% if request.form.kind!='mp3' %}selected{% endif %}>MP4 Video</option>
+                  <option value="mp3" {% if request.form.kind=='mp3' %}selected{% endif %}>MP3 Audio</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 9l-7 7-7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Quality selector -->
+              <div class="flex-1">
+              <label for="resolution" class="block text-sm font-medium text-gray-900 mb-2">Quality</label>
+              <div class="relative">
+                <input type="text" id="resolution" name="resolution"
+                       class="appearance-none block w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors text-gray-900"
+                       placeholder="720p (default)"
+                       value="{{ request.form.resolution or '' }}" />
+                <div class="absolute top-0 -mt-8 right-0 flex items-center space-x-2 text-sm">
+                  <span class="px-2 py-0.5 rounded transition-colors hover:bg-gray-100 cursor-pointer text-gray-500" onclick="document.getElementById('resolution').value='2160'">4K</span>
+                  <span class="px-2 py-0.5 rounded transition-colors hover:bg-gray-100 cursor-pointer text-gray-500" onclick="document.getElementById('resolution').value='1440'">1440p</span>
+                  <span class="px-2 py-0.5 rounded transition-colors hover:bg-gray-100 cursor-pointer text-gray-500" onclick="document.getElementById('resolution').value='1080'">1080p</span>
+                  <span class="px-2 py-0.5 rounded transition-colors hover:bg-gray-100 cursor-pointer text-gray-500" onclick="document.getElementById('resolution').value='720'">720p</span>
+                  <span class="px-2 py-0.5 rounded transition-colors hover:bg-gray-100 cursor-pointer text-gray-500" onclick="document.getElementById('resolution').value='480'">480p</span>
+                  <span class="px-2 py-0.5 rounded transition-colors hover:bg-gray-100 cursor-pointer text-gray-500" onclick="document.getElementById('resolution').value='360'">360p</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit button -->
+          <div class="pt-2">
+            <button type="submit" id="submitBtn"
+                    class="w-full flex items-center justify-center px-6 py-4 border border-transparent text-lg font-medium rounded-xl text-white bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors shadow-lg">
+              <svg id="btnSpinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+              </svg>
+              <span id="btnLabel">Download Now</span>
+            </button>
+
+              {% if downloaded_link %}
+                <a href="{{ downloaded_link }}" class="text-sm text-indigo-600 hover:underline">Open downloaded file</a>
+              {% endif %}
+            </div>
+            
+            <div class="flex items-center gap-3 mt-2 text-sm">
+              <label class="inline-flex items-center gap-2">
+                <input type="checkbox" name="stream" class="h-4 w-4 text-indigo-600 border-gray-300 rounded" />
+                <span>Save to browser (prompt Save As)</span>
+              </label>
+              <span class="text-xs text-gray-400">When checked, the downloaded file will be sent to your browser and you'll be prompted where to save it.</span>
+            </div>
+          </form>
+
+          <!-- Features list -->
+          <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="flex items-start">
+              <div class="flex-shrink-0">
+                <div class="flex items-center justify-center h-12 w-12 rounded-xl bg-red-100 text-red-600">
+                  <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="ml-4">
+                <h3 class="text-lg font-medium text-gray-900">Fast Downloads</h3>
+                <p class="mt-2 text-sm text-gray-500">
+                  Lightning-fast downloads with optimized servers and direct streaming.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-start">
+              <div class="flex-shrink-0">
+                <div class="flex items-center justify-center h-12 w-12 rounded-xl bg-red-100 text-red-600">
+                  <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="ml-4">
+                <h3 class="text-lg font-medium text-gray-900">High Quality</h3>
+                <p class="mt-2 text-sm text-gray-500">
+                  Download videos in HD quality up to 1080p resolution.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-start">
+              <div class="flex-shrink-0">
+                <div class="flex items-center justify-center h-12 w-12 rounded-xl bg-red-100 text-red-600">
+                  <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="ml-4">
+                <h3 class="text-lg font-medium text-gray-900">No Installation</h3>
+                <p class="mt-2 text-sm text-gray-500">
+                  Download directly from your browser, no software needed.
+                </p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Recent downloads card -->
+        <div class="mt-6 bg-white rounded-2xl shadow-xl p-8">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-medium text-gray-900">Recent Downloads</h3>
+            <span class="text-sm text-gray-500">Last 10 downloads</span>
+          </div>
+
+          <div class="divide-y divide-gray-200">
+            {% if recent_downloads and recent_downloads|length > 0 %}
+              {% for f in recent_downloads %}
+                <div class="py-4 flex items-center justify-between gap-4">
+                  <div class="flex items-center gap-4 min-w-0">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-red-100 text-red-600 flex items-center justify-center font-medium">
+                      {{ 'MP3' if f.kind=='audio' else 'MP4' }}
+                    </div>
+                    <div class="min-w-0">
+                      <p class="text-sm font-medium text-gray-900 truncate">{{ f.name }}</p>
+                      <p class="text-sm text-gray-500">{{ f.mtime_readable }} · {{ f.size_readable }}</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-4">
+                    <a href="{{ f.url }}" class="text-sm text-red-600 hover:text-red-700 font-medium">Download</a>
+                    <button data-url="{{ f.url }}" class="copy-btn inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                      Copy Link
+                    </button>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="py-4 text-sm text-gray-500">No downloads yet.</div>
+            {% endif %}
+          </div>
+
+          <!-- Processing status (optional) -->
+          {% if attempts %}
+            <div class="mt-6 text-center">
+              {% for a in attempts %}
+                {% if a.success %}
+                  <div class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Processing complete
+                  </div>
+                {% else %}
+                  <div class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-red-100 text-red-800">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    Processing failed
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Simple thumbnail preview (extract YouTube ID from URL)
+      function extractYouTubeId(url) {
+        try {
+          const m = url.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+          return m ? m[1] : null;
+        } catch (e) { return null; }
+      }
+
+      const urlInput = document.getElementById('url');
+      const thumbDiv = document.getElementById('thumb');
+      const thumbImg = document.getElementById('thumbImg');
+      urlInput && urlInput.addEventListener('input', () => {
+        const id = extractYouTubeId(urlInput.value);
+        if (id) {
+          thumbImg.src = `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
+          thumbDiv.classList.remove('hidden');
+        } else {
+          thumbDiv.classList.add('hidden');
+          thumbImg.src = '';
+        }
+      });
+
+      // Show spinner on submit
+      const form = document.getElementById('downloadForm');
+      const submitBtn = document.getElementById('submitBtn');
+      const btnSpinner = document.getElementById('btnSpinner');
+      const btnLabel = document.getElementById('btnLabel');
+      form && form.addEventListener('submit', () => {
+        submitBtn.setAttribute('disabled', 'disabled');
+        btnSpinner.classList.remove('hidden');
+        btnLabel.textContent = 'Working...';
+      });
+
+      // Copy link buttons in recent downloads
+      document.addEventListener('click', function (e) {
+        const t = e.target;
+        if (t && t.classList && t.classList.contains('copy-btn')) {
+          const url = t.getAttribute('data-url');
+          if (url) {
+            navigator.clipboard && navigator.clipboard.writeText(url).then(() => {
+              const old = t.textContent;
+              t.textContent = 'Copied';
+              setTimeout(() => t.textContent = old, 1500);
+            }).catch(() => {
+              // fallback: select and copy
+              const tmp = document.createElement('textarea');
+              tmp.value = url; document.body.appendChild(tmp); tmp.select();
+              try { document.execCommand('copy'); t.textContent = 'Copied'; setTimeout(()=>t.textContent='Copy link',1500); } finally { tmp.remove(); }
+            });
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
